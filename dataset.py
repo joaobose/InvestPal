@@ -5,6 +5,7 @@ class ForexDataset():
     def __init__(self, files, number_of_candles):
         self.samples = np.array([])
         self.labels = np.array([])
+        self.dataset_length = 0
 
         # dimensions: (M, k, samples)
         self.training_samples = np.array([])
@@ -16,9 +17,14 @@ class ForexDataset():
         self.validation_labels = np.array([])
         self.test_labels = np.array([])
         
-        self.index = 0
-        self.dataset_length = 0
+        self.train_index = 0
+        self.validation_index = 0
+        self.test_index = 0
 
+        self.train_length = 0
+        self.validation_length = 0
+        self.test_length = 0
+        
         for file_ in files:
             tohlcv_matrix = np.loadtxt(file_, delimiter=',', dtype=float)
             i = number_of_candles
@@ -47,19 +53,31 @@ class ForexDataset():
         dataset_end = False
         
         if kind == 'train': 
-            input_batch = self.training_samples[:,:,self.index:self.index + size]
-            label_batch = self.training_labels[self.index:self.index + size]
+            input_batch = self.training_samples[:,:,self.train_index:self.train_index + size]
+            label_batch = self.training_labels[self.train_index:self.train_index + size]
+            self.train_index += size
+
+            if(self.train_index >= self.train_length):
+                self.train_index = 0
+                dataset_end = True
+
         elif kind == 'validation':
-            input_batch = self.validation_samples[:,:,self.index:self.index + size]
-            label_batch = self.validation_labels[self.index:self.index + size]
+            input_batch = self.validation_samples[:,:,self.validation_index:self.validation_index + size]
+            label_batch = self.validation_labels[self.validation_index:self.validation_index + size]
+            self.validation_index += size
+
+            if(self.validation_index >= self.validation_length):
+                self.validation_index = 0
+                dataset_end = True
+            
         else:
-            input_batch = self.testing_samples[:,:,self.index:self.index + size]
-            label_batch = self.testing_labels[self.index:self.index + size]
-        
-        self.index += size
-        if(self.index >= self.dataset_length):
-            self.index = 0
-            dataset_end = True
+            input_batch = self.testing_samples[:,:,self.test_index:self.test_index + size]
+            label_batch = self.testing_labels[self.test_index:self.test_index + size]
+            self.test_index += size
+
+            if(self.test_index >= self.test_length):
+                self.test_index = 0
+                dataset_end = True
 
         input_batch = self.normalize(input_batch)
         
@@ -79,6 +97,10 @@ class ForexDataset():
         return batch
 
     def split_dataset(self):
+        self.train_length = int(0.6*self.dataset_length)
+        self.validation_length = int(0.2*self.dataset_length)
+        self.test_length = int(0.2*self.dataset_length)
+
         self.training_samples = self.samples[:,:,:int(0.6*self.dataset_length)]
         self.validation_samples = self.samples[:,:,int(0.6*self.dataset_length):int(0.8*self.dataset_length)]
         self.testing_samples = self.samples[:,:,int(0.8*self.dataset_length):]

@@ -42,8 +42,10 @@ for epoch in range(epochs):
     minibatch_losses = []
     minibatch_accs = []
 
-    while not dataset_done:
+    while True:
         data, labels, dataset_done = dataset.get_batch(batch_size, 'train')
+        if dataset_done:
+            break
         data = [torch.FloatTensor(timestep) for timestep in data]
         labels = torch.FloatTensor(labels)
 
@@ -59,7 +61,7 @@ for epoch in range(epochs):
         minibatch_losses.append(loss.item())
 
         # Calculating accuracy
-        y_hat = out.cpu().numpy()
+        y_hat = out.cpu().detach().numpy()
         y = labels.cpu().numpy()
 
         acc = (y_hat > acc_threshold)
@@ -77,8 +79,10 @@ for epoch in range(epochs):
     dataset_done = False
     minibatch_accs = []
 
-    while not dataset_done:
+    while True:
         data, labels, dataset_done = dataset.get_batch(batch_size, 'validation')
+        if dataset_done:
+            break
         data = [torch.FloatTensor(timestep) for timestep in data]
         labels = torch.FloatTensor(labels)
 
@@ -92,7 +96,7 @@ for epoch in range(epochs):
         model.backpropagate(out,labels)
 
         # Calculating accuracy
-        y_hat = out.cpu().numpy()
+        y_hat = out.cpu().detach().numpy()
         y = labels.cpu().numpy()
 
         acc = (y_hat > acc_threshold)

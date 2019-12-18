@@ -66,7 +66,6 @@ class LSTM_BC(nn.Module):
         # LSTM cells chain
         for i in range(len(x)):
             input_t = x[i]
-
             if str(self.device) == 'cuda':
                 input_t = input_t.cuda()
 

@@ -82,39 +82,39 @@ try:
             train_accs.append(train_acc_mean)
         
         #------------------------------------- Validation loop----------------------------------- #
-        dataset_done = False
-        minibatch_accs = []
+        # dataset_done = False
+        # minibatch_accs = []
 
-        with torch.no_grad():
-            while True:
-                data, labels, dataset_done = dataset.get_batch(batch_size, 'validation')
-                if dataset_done:
-                    break
-                data = torch.FloatTensor(data)
-                labels = torch.FloatTensor(labels)
+        # with torch.no_grad():
+        #     while True:
+        #         data, labels, dataset_done = dataset.get_batch(batch_size, 'validation')
+        #         if dataset_done:
+        #             break
+        #         data = torch.FloatTensor(data)
+        #         labels = torch.FloatTensor(labels)
 
-                assert(len(data) == seq_len)
+        #         assert(len(data) == seq_len)
 
-                if str(device) == 'cuda':
-                    data = data.cuda()
-                    labels = labels.cuda()
+        #         if str(device) == 'cuda':
+        #             data = data.cuda()
+        #             labels = labels.cuda()
 
-                out = model(data)
+        #         out = model(data)
 
-                # Calculating accuracy
-                y_hat = out.cpu().detach().numpy()
-                y = labels.cpu().numpy()
+        #         # Calculating accuracy
+        #         y_hat = out.cpu().detach().numpy()
+        #         y = labels.cpu().numpy()
 
-                acc = (y_hat > acc_threshold)
-                acc = (acc * 1 == y) * 1
-                acc = acc.sum() / len(y)
-                minibatch_accs.append(acc)
+        #         acc = (y_hat > acc_threshold)
+        #         acc = (acc * 1 == y) * 1
+        #         acc = acc.sum() / len(y)
+        #         minibatch_accs.append(acc)
 
 
-            validation_acc_mean = np.array(minibatch_accs).mean()
+        #     validation_acc_mean = np.array(minibatch_accs).mean()
 
-            if epoch % plot_save_freq:
-                validation_accs.append(validation_acc_mean)
+        #     if epoch % plot_save_freq:
+        #         validation_accs.append(validation_acc_mean)
         
         
         #------------------------------------- lr decay -------------------------------------- #
@@ -125,7 +125,7 @@ try:
         print('\nEpoch: {}'.format(epoch))
         print('Loss: {}'.format(loss_mean))
         print('Train Accuracy: {}'.format(train_acc_mean))
-        print('Validation Acurracy: {}'.format(validation_acc_mean))
+        # print('Validation Acurracy: {}'.format(validation_acc_mean))
         print('Learning rate: {}'.format(model.optimizer.param_groups[0]['lr']))
 
 except KeyboardInterrupt:

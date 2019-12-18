@@ -40,9 +40,9 @@ class LSTM_BC(nn.Module):
         self.lstm = nn.LSTM(input_dim, hidden_dim, n_layers, batch_first=False)
 
         self.dropout = nn.Dropout(drop_prob)
-        self.fc = nn.Linear(hidden_dim, 64)
-        self.fc2 = nn.Linear(64, 64)
-        self.fc3 = nn.Linear(64, output_size)
+        self.fc = nn.Linear(hidden_dim, 8)
+        self.fc2 = nn.Linear(8, 8)
+        self.fc3 = nn.Linear(8, output_size)
         self.sigmoid = nn.Sigmoid()
         
         self.learning_rate = learning_rate

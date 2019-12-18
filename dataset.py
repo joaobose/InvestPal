@@ -109,7 +109,7 @@ class ForexDataset():
                 dataset_end = True
 
         # dimensions: (n, k, samples)
-        # input_batch = self.normalize(input_batch)
+        input_batch = self.normalize(input_batch)
         
         # to: (n, m, k)
         input_batch = np.transpose(input_batch, (0, 2, 1))

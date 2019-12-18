@@ -53,8 +53,8 @@ class ForexDataset():
         dataset_end = False
         
         if kind == 'train': 
-            input_batch = self.training_samples[:,:,self.train_index:self.train_index + size]
-            label_batch = self.training_labels[self.train_index:self.train_index + size]
+            input_batch = np.copy(self.training_samples[:,:,self.train_index:self.train_index + size])
+            label_batch = np.copy(self.training_labels[self.train_index:self.train_index + size])
             self.train_index += size
 
             if(self.train_index >= self.train_length):
@@ -62,8 +62,8 @@ class ForexDataset():
                 dataset_end = True
 
         elif kind == 'validation':
-            input_batch = self.validation_samples[:,:,self.validation_index:self.validation_index + size]
-            label_batch = self.validation_labels[self.validation_index:self.validation_index + size]
+            input_batch = np.copy(self.validation_samples[:,:,self.validation_index:self.validation_index + size])
+            label_batch = np.copy(self.validation_labels[self.validation_index:self.validation_index + size])
             self.validation_index += size
 
             if(self.validation_index >= self.validation_length):
@@ -71,8 +71,8 @@ class ForexDataset():
                 dataset_end = True
             
         else:
-            input_batch = self.testing_samples[:,:,self.test_index:self.test_index + size]
-            label_batch = self.testing_labels[self.test_index:self.test_index + size]
+            input_batch = np.copy(self.testing_samples[:,:,self.test_index:self.test_index + size])
+            label_batch = np.copy(self.testing_labels[self.test_index:self.test_index + size])
             self.test_index += size
 
             if(self.test_index >= self.test_length):
@@ -101,13 +101,13 @@ class ForexDataset():
         self.validation_length = int(0.2*self.dataset_length)
         self.test_length = int(0.2*self.dataset_length)
 
-        self.training_samples = self.samples[:,:,:int(0.6*self.dataset_length)]
-        self.validation_samples = self.samples[:,:,int(0.6*self.dataset_length):int(0.8*self.dataset_length)]
-        self.testing_samples = self.samples[:,:,int(0.8*self.dataset_length):]
+        self.training_samples = np.copy(self.samples[:,:,:int(0.6*self.dataset_length)])
+        self.validation_samples = np.copy(self.samples[:,:,int(0.6*self.dataset_length):int(0.8*self.dataset_length)])
+        self.testing_samples = np.copy(self.samples[:,:,int(0.8*self.dataset_length):])
 
-        self.training_labels = self.labels[:int(0.6*self.dataset_length)]
-        self.validation_labels = self.labels[int(0.6*self.dataset_length):int(0.8*self.dataset_length)]
-        self.testing_labels = self.labels[int(0.8*self.dataset_length):]
+        self.training_labels = np.copy(self.labels[:int(0.6*self.dataset_length)])
+        self.validation_labels = np.copy(self.labels[int(0.6*self.dataset_length):int(0.8*self.dataset_length)])
+        self.testing_labels = np.copy(self.labels[int(0.8*self.dataset_length):])
 
         self.samples = []
         self.labels = []

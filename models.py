@@ -63,6 +63,7 @@ class LSTM_BC(nn.Module):
     def forward(self, x):
         hidden = self.initial_hidden
 
+        # LSTM cells chain
         for i in range(len(x)):
             input_t = x[i]
 

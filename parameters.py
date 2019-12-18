@@ -38,8 +38,17 @@ drop_prob = 0.5
 misc hyperparameters:
     you know what these are
 """
-batch_size = 10
+batch_size = 64
 learning_rate = 0.001
 lr_decay_active = False
 lr_decay = 8000
 epochs = 10000 
+
+"""
+dataset parameters
+    dataset related parameters
+"""
+single_pair = True
+pair = 'EURUSD'
+timestep = '4h'
+acc_threshold = 0.6

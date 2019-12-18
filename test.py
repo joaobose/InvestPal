@@ -36,4 +36,4 @@ gt = np.array([1,0,1,1,0,1,1,1,0,1])
 gt = torch.FloatTensor(gt).cuda()
 
 loss = model.backpropagate(out,gt)
-print('loss: ', loss)
+print('loss: ', loss.item())

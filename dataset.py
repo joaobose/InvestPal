@@ -32,10 +32,10 @@ class ForexDataset():
                 tohlcv_matrix = np.loadtxt(file_, delimiter=',', dtype=float)
                 i = number_of_candles
 
-                while i < len(tohlcv_matrix):
+                while i + parameters.prediction_window < len(tohlcv_matrix):
                     # M x k samples
                     tohlcv_candles = tohlcv_matrix[i-number_of_candles:i]
-                    tohlcv_next_candle = tohlcv_matrix[i]
+                    tohlcv_next_candle = tohlcv_matrix[i:i + parameters.prediction_window]
                     label = self.get_label(tohlcv_next_candle)
                     self.samples = np.dstack((self.samples, tohlcv_candles)) if self.samples.size else tohlcv_candles
                     print(self.samples.shape)
@@ -62,11 +62,12 @@ class ForexDataset():
         self.dataset_length = len(self.labels)
         self.split_dataset()
         
-    def get_label(self, next_candle):
+    def get_label(self, next_candles):
         # Get the open and close price of the last candle
-        # Close price - open price
-        price_difference = next_candle[4] - next_candle[1]
-        if price_difference >= 0:
+        # Close prices - open price
+        price_difference = next_candles[:,4] - next_candles[0,1]
+        count = ((price_difference >= 0) * 1).sum()
+        if count > 0:
             return np.array([1])
         return np.array([0])
     
@@ -109,7 +110,7 @@ class ForexDataset():
                 dataset_end = True
 
         # dimensions: (n, k, samples)
-        input_batch = self.normalize(input_batch)
+        # input_batch = self.normalize(input_batch)
         
         # to: (n, m, k)
         input_batch = np.transpose(input_batch, (0, 2, 1))

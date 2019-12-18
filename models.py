@@ -90,4 +90,9 @@ class LSTM_BC(nn.Module):
         lr = self.learning_rate * math.exp(- epoch / self.lr_decay)
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
+
+    def learning_rate_step(self, epoch, nums):
+        if epoch in nums:
+            for param_group in self.optimizer.param_groups:
+                param_group['lr'] = 0.2 * param_group['lr'] 
     

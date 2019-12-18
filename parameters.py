@@ -1,6 +1,6 @@
 """
 n_layers (L):
-    number of hidden units/layers
+    number of lstm layers
 """
 n_layers = 1
 
@@ -11,17 +11,16 @@ input_dim (K):
 input_dim = 6
 
 """
-subsequence_size (n):
+sequence_size (n):
     size of each temporal section
-    TO FIX
 """
-seq_len = 2
+seq_len = 4
 
 """
 hidden_dim:
     length of hidden (memories)
 """
-hidden_dim = 4
+hidden_dim = 8
 
 """
 drop_prob:
@@ -33,10 +32,10 @@ drop_prob = 0
 misc hyperparameters:
     you know what these are
 """
-batch_size = 64
-learning_rate = 0.0005
-lr_decay_active = False
-lr_decay = 8000
+batch_size = 1024
+learning_rate = 0.001
+lr_decay_active = True # False
+lr_decay = 8000 #6000
 epochs = 1000000
 plot_save_freq = 50
 

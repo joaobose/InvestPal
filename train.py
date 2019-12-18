@@ -37,7 +37,8 @@ losses = []
 
 try:
     for epoch in range(epochs):
-
+        model.initial_hidden = model.init_hidden()
+        
         #------------------------------------- Train loop----------------------------------- #
         dataset_done = False
         minibatch_losses = []

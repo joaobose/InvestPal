@@ -38,11 +38,11 @@ class LSTM_BC(nn.Module):
         self.batch_size = batch_size
 
         self.lstm = nn.LSTM(input_dim, hidden_dim, n_layers, batch_first=False)
-        if str(self.device) == 'cuda':
-            self.lstm = self.lstm.cuda()
 
         self.dropout = nn.Dropout(drop_prob)
-        self.fc = nn.Linear(hidden_dim, output_size)
+        self.fc = nn.Linear(hidden_dim, 64)
+        self.fc2 = nn.Linear(64, 64)
+        self.fc3 = nn.Linear(64, output_size)
         self.sigmoid = nn.Sigmoid()
         
         self.learning_rate = learning_rate
@@ -62,8 +62,10 @@ class LSTM_BC(nn.Module):
 
         lstm_out = lstm_out.contiguous().view(-1, self.hidden_dim)
 
-        out = self.dropout(lstm_out)
-        out = self.fc(out)
+        out = lstm_out
+        out = F.relu(self.fc(out))
+        out = F.relu(self.fc2(out))
+        out = self.fc3(out)
         out = self.sigmoid(out)
 
         out = out.view(self.batch_size, -1)

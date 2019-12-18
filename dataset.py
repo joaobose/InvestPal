@@ -6,10 +6,12 @@ class ForexDataset():
         self.samples = np.array([])
         self.labels = np.array([])
 
+        # dimensions: (M, k, samples)
         self.training_samples = np.array([])
         self.validation_samples = np.array([])
         self.testing_samples = np.array([])
 
+        # dimensions: (samples, 1)
         self.training_labels = np.array([])
         self.validation_labels = np.array([])
         self.test_labels = np.array([])
@@ -29,8 +31,6 @@ class ForexDataset():
                 self.samples = np.dstack((self.samples, tohlcv_candles)) if self.samples.size else tohlcv_candles
                 self.labels = np.append(self.labels, label)
                 i += 1
-
-            self.normalize()
 
         self.dataset_length = len(self.labels)
         self.split_dataset()
@@ -60,15 +60,23 @@ class ForexDataset():
         if(self.index >= self.dataset_length):
             self.index = 0
             dataset_end = True
+
+        input_batch = self.normalize(input_batch)
+        
+        # dimensions: (1, M, k, samples)
         input_batch = np.array([input_batch])
+
+        # to: (M, m, n, k)
         input_batch = np.transpose(input_batch, (1, 3, 0, 2))
         return input_batch, label_batch, dataset_end
 
-    
-    
 
-    def normalize(self):
-        return True
+    def normalize(self, batch):
+        mean = np.mean(batch, axis=2)
+        batch -= mean[:, :, np.newaxis]
+        dev = np.std(batch, axis=2)
+        batch /= (mean[:, :, np.newaxis] + 0.0000001)
+        return batch
 
     def split_dataset(self):
         self.training_samples = self.samples[:,:,:int(0.6*self.dataset_length)]
@@ -81,15 +89,7 @@ class ForexDataset():
 
         self.samples = []
         self.labels = []
-
-        print(self.training_samples.shape)
-        print(self.validation_samples.shape)
-        print(self.testing_samples.shape)
-        print(self.training_labels.shape)
-        print(self.validation_labels.shape)
-        print(self.testing_labels.shape)
         
-
     # def test_batch(self):
     #     a = np.array([])
     #     b = np.array([[1, 1, 1, 1, 1, 1], [1.5, 1.5, 1.5, 1.5, 1.5, 1.5]])

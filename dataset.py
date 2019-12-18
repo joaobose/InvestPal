@@ -43,7 +43,7 @@ class ForexDataset():
                     i += 1
 
         else:
-            t = np.arange(0,100,0.01)
+            t = np.arange(0,7,0.00005)
             sin = np.sin(t)
             sin = sin.reshape(-1, 1)
 
@@ -108,13 +108,11 @@ class ForexDataset():
                 self.test_index = 0
                 dataset_end = True
 
-        input_batch = self.normalize(input_batch)
+        # dimensions: (n, k, samples)
+        # input_batch = self.normalize(input_batch)
         
-        # dimensions: (1, M, k, samples)
-        input_batch = np.array([input_batch])
-
-        # to: (M, m, n, k)
-        input_batch = np.transpose(input_batch, (1, 3, 0, 2))
+        # to: (n, m, k)
+        input_batch = np.transpose(input_batch, (0, 2, 1))
 
         return input_batch, label_batch, dataset_end
 
@@ -138,6 +136,19 @@ class ForexDataset():
         self.training_labels = np.copy(self.labels[:int(0.6*self.dataset_length)])
         self.validation_labels = np.copy(self.labels[int(0.6*self.dataset_length):int(0.8*self.dataset_length)])
         self.testing_labels = np.copy(self.labels[int(0.8*self.dataset_length):])
+
+        if parameters.is_sin:
+            self.training_samples = np.copy(self.samples)
+            self.validation_samples = np.copy(self.samples)
+            self.testing_samples = np.copy(self.samples)
+
+            self.training_labels = np.copy(self.labels)
+            self.validation_labels = np.copy(self.labels)
+            self.testing_labels = np.copy(self.labels)
+
+            self.train_length = self.dataset_length 
+            self.validation_length = self.dataset_length 
+            self.test_length = self.dataset_length
 
         self.samples = []
         self.labels = []

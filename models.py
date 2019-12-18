@@ -7,9 +7,6 @@ import numpy as np
 class LSTM_BC(nn.Module):
     """
         Params:
-            timesteps (M):
-                number of temporal sections
-
             n_layers (L):
                 number of hidden units/layers
 
@@ -29,19 +26,18 @@ class LSTM_BC(nn.Module):
                 probability of dropping for dropout layer
         
         Notes:
-            - input shape is M x (m,n,K)
+            - input shape is (n,m,K)
     """
-    def __init__(self, learning_rate, timesteps, n_layers, input_dim, subsequence_size, hidden_dim, batch_size, output_size, device, drop_prob=0.5, lr_decay=1000):
+    def __init__(self, learning_rate, n_layers, input_dim, subsequence_size, hidden_dim, batch_size, output_size, device, drop_prob=0.5, lr_decay=1000):
         super(LSTM_BC, self).__init__()
         self.device = device
-        self.timesteps = timesteps
         self.n_layers = n_layers
         self.input_dim = input_dim
         self.subsequence_size = subsequence_size
         self.hidden_dim = hidden_dim
         self.batch_size = batch_size
 
-        self.lstm = nn.LSTM(input_dim, hidden_dim, n_layers, batch_first=True)
+        self.lstm = nn.LSTM(input_dim, hidden_dim, n_layers, batch_first=False)
         if str(self.device) == 'cuda':
             self.lstm = self.lstm.cuda()
 
@@ -59,13 +55,10 @@ class LSTM_BC(nn.Module):
     def forward(self, x):
         hidden = self.initial_hidden
 
-        # Sequence evaluation
-        for i in range(len(x)):
-            input_t = x[i]
-            if str(self.device) == 'cuda':
-                input_t = input_t.cuda()
+        if str(self.device) == 'cuda':
+            x = x.cuda()
 
-            lstm_out, hidden = self.lstm(input_t, hidden)
+        lstm_out, hidden = self.lstm(x, hidden)
 
         lstm_out = lstm_out.contiguous().view(-1, self.hidden_dim)
 

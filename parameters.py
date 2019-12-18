@@ -1,10 +1,4 @@
 """
-timesteps (M):
-    number of temporal sections
-"""
-timesteps = 5
-
-"""
 n_layers (L):
     number of hidden units/layers
 """
@@ -21,7 +15,7 @@ subsequence_size (n):
     size of each temporal section
     TO FIX
 """
-seq_len = 1
+seq_len = 2
 
 """
 hidden_dim:
@@ -39,12 +33,12 @@ drop_prob = 0
 misc hyperparameters:
     you know what these are
 """
-batch_size = 4*1024
-learning_rate = 0.1
+batch_size = 64
+learning_rate = 0.0005
 lr_decay_active = False
 lr_decay = 8000
 epochs = 1000000
-plot_save_freq = 10
+plot_save_freq = 50
 
 """
 dataset parameters

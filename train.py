@@ -12,7 +12,6 @@ else:
     device = torch.device("cpu")
 
 model = models.LSTM_BC(learning_rate,
-                       timesteps,
                        n_layers,
                        input_dim,
                        seq_len,
@@ -29,7 +28,7 @@ if single_pair:
 else:
     files = os.listdir('./dataset/' + timestep)
 
-dataset = ForexDataset(files, timesteps)
+dataset = ForexDataset(files, seq_len)
 
 # Metrics
 train_accs = []
@@ -44,19 +43,18 @@ try:
         minibatch_losses = []
         minibatch_accs = []
         
-
         while True:
             data, labels, dataset_done = dataset.get_batch(batch_size, 'train')
 
             if dataset_done:
                 break
-            data = [torch.FloatTensor(timestep) for timestep in data]
+            data = torch.FloatTensor(data)
             labels = torch.FloatTensor(labels)
 
-            assert(len(data) == timesteps)
+            assert(len(data) == seq_len)
 
             if str(device) == 'cuda':
-                data = [timestep.cuda() for timestep in data]
+                data = data.cuda()
                 labels = labels.cuda()
 
             model.zero_grad()
@@ -91,13 +89,13 @@ try:
                 data, labels, dataset_done = dataset.get_batch(batch_size, 'validation')
                 if dataset_done:
                     break
-                data = [torch.FloatTensor(timestep) for timestep in data]
+                data = torch.FloatTensor(data)
                 labels = torch.FloatTensor(labels)
 
-                assert(len(data) == timesteps)
+                assert(len(data) == seq_len)
 
                 if str(device) == 'cuda':
-                    data = [timestep.cuda() for timestep in data]
+                    data = data.cuda()
                     labels = labels.cuda()
 
                 # model.zero_grad()

@@ -43,7 +43,7 @@ class ForexDataset():
                     i += 1
 
         else:
-            t = np.arange(0,7,0.00005)
+            t = np.arange(0,7,0.001)
             sin = np.sin(t)
             sin = sin.reshape(-1, 1)
 
@@ -52,7 +52,7 @@ class ForexDataset():
                 # M x k samples
                 sin_samples = sin[i-number_of_candles:i]
 
-                label = self.get_label_sin(sin[i], sin[i+1])
+                label = self.get_label_sin(sin[i-1], sin[i])
 
                 self.samples = np.dstack((self.samples, sin_samples)) if self.samples.size else sin_samples
                 print(self.samples.shape)

@@ -11,7 +11,7 @@ else:
     device = torch.device("cpu")
 
 model = models.LSTM_BC(learning_rate,
-                       cell_num,
+                       timesteps,
                        n_layers,
                        input_dim,
                        seq_len,
@@ -28,7 +28,7 @@ if single_pair:
 else:
     files = os.listdir('./dataset/' + timestep)
 
-dataset = ForexDataset(files, cell_num)
+dataset = ForexDataset(files, timesteps)
 
 # Metrics
 train_accs = []
@@ -41,21 +41,25 @@ for epoch in range(epochs):
     dataset_done = False
     minibatch_losses = []
     minibatch_accs = []
+    
 
     while True:
         data, labels, dataset_done = dataset.get_batch(batch_size, 'train')
+
         if dataset_done:
             break
         data = [torch.FloatTensor(timestep) for timestep in data]
         labels = torch.FloatTensor(labels)
 
-        assert(len(data) == cell_num)
+        assert(len(data) == timesteps)
 
         if str(device) == 'cuda':
             data = [timestep.cuda() for timestep in data]
             labels = labels.cuda()
 
+        model.zero_grad()
         out = model(data)
+
         loss = model.backpropagate(out,labels)
 
         minibatch_losses.append(loss.item())
@@ -79,33 +83,34 @@ for epoch in range(epochs):
     dataset_done = False
     minibatch_accs = []
 
-    while True:
-        data, labels, dataset_done = dataset.get_batch(batch_size, 'validation')
-        if dataset_done:
-            break
-        data = [torch.FloatTensor(timestep) for timestep in data]
-        labels = torch.FloatTensor(labels)
+    with torch.no_grad():
+        while True:
+            data, labels, dataset_done = dataset.get_batch(batch_size, 'validation')
+            if dataset_done:
+                break
+            data = [torch.FloatTensor(timestep) for timestep in data]
+            labels = torch.FloatTensor(labels)
 
-        assert(len(data) == cell_num)
+            assert(len(data) == timesteps)
 
-        if str(device) == 'cuda':
-            data = [timestep.cuda() for timestep in data]
-            labels = labels.cuda()
+            if str(device) == 'cuda':
+                data = [timestep.cuda() for timestep in data]
+                labels = labels.cuda()
 
-        out = model(data)
-        model.backpropagate(out,labels)
+            # model.zero_grad()
+            out = model(data)
 
-        # Calculating accuracy
-        y_hat = out.cpu().detach().numpy()
-        y = labels.cpu().numpy()
+            # Calculating accuracy
+            y_hat = out.cpu().detach().numpy()
+            y = labels.cpu().numpy()
 
-        acc = (y_hat > acc_threshold)
-        acc = (acc * 1 == y) * 1
-        acc = acc.sum() / len(y)
-        minibatch_accs.append(acc)
+            acc = (y_hat > acc_threshold)
+            acc = (acc * 1 == y) * 1
+            acc = acc.sum() / len(y)
+            minibatch_accs.append(acc)
 
-    validation_acc_mean = np.array(minibatch_accs).mean()
-    validation_accs.append(validation_acc_mean)
+        validation_acc_mean = np.array(minibatch_accs).mean()
+        validation_accs.append(validation_acc_mean)
 
     #------------------------------------- Epoch output -------------------------------------- #
     print('\nEpoch: {}'.format(epoch))

@@ -1,5 +1,7 @@
 from torch.utils.data import Dataset
 import numpy as np
+import parameters
+
 
 class ForexDataset():
     def __init__(self, files, number_of_candles):
@@ -25,16 +27,35 @@ class ForexDataset():
         self.validation_length = 0
         self.test_length = 0
         
-        for file_ in files:
-            tohlcv_matrix = np.loadtxt(file_, delimiter=',', dtype=float)
-            i = number_of_candles
+        if not parameters.is_sin:
+            for file_ in files:
+                tohlcv_matrix = np.loadtxt(file_, delimiter=',', dtype=float)
+                i = number_of_candles
 
-            while i < len(tohlcv_matrix):
+                while i < len(tohlcv_matrix):
+                    # M x k samples
+                    tohlcv_candles = tohlcv_matrix[i-number_of_candles:i]
+                    tohlcv_next_candle = tohlcv_matrix[i]
+                    label = self.get_label(tohlcv_next_candle)
+                    self.samples = np.dstack((self.samples, tohlcv_candles)) if self.samples.size else tohlcv_candles
+                    print(self.samples.shape)
+                    self.labels = np.append(self.labels, label)
+                    i += 1
+
+        else:
+            t = np.arange(0,100,0.01)
+            sin = np.sin(t)
+            sin = sin.reshape(-1, 1)
+
+            i = number_of_candles
+            while i < len(sin) - 1:
                 # M x k samples
-                tohlcv_candles = tohlcv_matrix[i-number_of_candles:i]
-                tohlcv_next_candle = tohlcv_matrix[i]
-                label = self.get_label(tohlcv_next_candle)
-                self.samples = np.dstack((self.samples, tohlcv_candles)) if self.samples.size else tohlcv_candles
+                sin_samples = sin[i-number_of_candles:i]
+
+                label = self.get_label_sin(sin[i], sin[i+1])
+
+                self.samples = np.dstack((self.samples, sin_samples)) if self.samples.size else sin_samples
+                print(self.samples.shape)
                 self.labels = np.append(self.labels, label)
                 i += 1
 
@@ -45,6 +66,14 @@ class ForexDataset():
         # Get the open and close price of the last candle
         # Close price - open price
         price_difference = next_candle[4] - next_candle[1]
+        if price_difference >= 0:
+            return np.array([1])
+        return np.array([0])
+    
+    def get_label_sin(self, current, next):
+        # Get the open and close price of the last candle
+        # Close price - open price
+        price_difference = next - current
         if price_difference >= 0:
             return np.array([1])
         return np.array([0])
@@ -86,6 +115,7 @@ class ForexDataset():
 
         # to: (M, m, n, k)
         input_batch = np.transpose(input_batch, (1, 3, 0, 2))
+
         return input_batch, label_batch, dataset_end
 
 
@@ -111,15 +141,3 @@ class ForexDataset():
 
         self.samples = []
         self.labels = []
-        
-    # def test_batch(self):
-    #     a = np.array([])
-    #     b = np.array([[1, 1, 1, 1, 1, 1], [1.5, 1.5, 1.5, 1.5, 1.5, 1.5]])
-    #     c = np.array([[2, 2, 2, 2, 2, 2], [2.5, 2.5, 2.5, 2.5, 2.5, 2.5]])
-    #     d = np.array([[3, 3, 3, 3, 3, 3], [3.5, 3.5, 3.5, 3.5, 3.5, 3.5]])
-        
-    #     a = np.dstack((a,b)) if a.size else b
-    #     a = np.dstack((a,c)) if a.size else b
-    #     a = np.dstack((a,d)) if a.size else b
-    #     a = np.transpose(a, (2, 0, 1))
-    #     print(a)

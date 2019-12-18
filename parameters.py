@@ -1,24 +1,25 @@
 """
-cell_num (M):
-    number of cells of the network = number of temporal sections
+timesteps (M):
+    number of temporal sections
 """
-cell_num = 10
+timesteps = 5
 
 """
 n_layers (L):
-    number of layers of each cell
+    number of hidden units/layers
 """
-n_layers = 1
+n_layers = 2
 
 """
 input_dim (K):
-    size of each element of the sequences 
+    size of each element of the sequences
 """
 input_dim = 6
 
 """
 subsequence_size (n):
     size of each temporal section
+    TO FIX
 """
 seq_len = 1
 
@@ -38,8 +39,8 @@ drop_prob = 0.5
 misc hyperparameters:
     you know what these are
 """
-batch_size = 64
-learning_rate = 0.001
+batch_size = 1024
+learning_rate = 0.01
 lr_decay_active = False
 lr_decay = 8000
 epochs = 10000 
@@ -52,3 +53,7 @@ single_pair = True
 pair = 'EURUSD'
 timestep = '4h'
 acc_threshold = 0.6
+is_sin = False
+
+if is_sin:
+    input_dim = 1

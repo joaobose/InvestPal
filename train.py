@@ -38,7 +38,7 @@ losses = []
 try:
     for epoch in range(epochs):
         model.initial_hidden = model.init_hidden()
-        
+
         #------------------------------------- Train loop----------------------------------- #
         dataset_done = False
         minibatch_losses = []
@@ -126,6 +126,7 @@ try:
         print('Loss: {}'.format(loss_mean))
         print('Train Accuracy: {}'.format(train_acc_mean))
         print('Validation Acurracy: {}'.format(validation_acc_mean))
+        print('Learning rate: {}'.format(model.optimizer.param_groups[0]['lr']))
 
 except KeyboardInterrupt:
     print('se acabo')

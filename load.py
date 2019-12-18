@@ -5,7 +5,7 @@ from dataset import *
 single_pair = True
 pair = 'EURUSD'
 timestep = '4h'
-number_of_candles = 10
+number_of_candles = 50
 
 files = []
 if single_pair:
@@ -13,10 +13,8 @@ if single_pair:
 else:
     files = os.listdir('./dataset/' + timestep)
 
-
-
 dataset = ForexDataset(files, number_of_candles)
-data, label = dataset.get_batch(64)
+data, label, _ = dataset.get_batch(64)
 
 print(data.shape)
 print(label.shape)

@@ -8,12 +8,12 @@ class LSTM_BC(nn.Module):
     """
         Params:
             n_layers (L):
-                number of hidden units/layers
+                number of lstm layers
 
             input_dim (K):
                 size of each element of the sequences 
 
-            subsequence_size (n):
+            sequence_size (n):
                 size of each temporal section
 
             hidden_dim:
@@ -28,12 +28,12 @@ class LSTM_BC(nn.Module):
         Notes:
             - input shape is (n,m,K)
     """
-    def __init__(self, learning_rate, n_layers, input_dim, subsequence_size, hidden_dim, batch_size, output_size, device, drop_prob=0.5, lr_decay=1000):
+    def __init__(self, learning_rate, n_layers, input_dim, sequence_size, hidden_dim, batch_size, output_size, device, drop_prob=0.5, lr_decay=1000):
         super(LSTM_BC, self).__init__()
         self.device = device
         self.n_layers = n_layers
         self.input_dim = input_dim
-        self.subsequence_size = subsequence_size
+        self.sequence_size = sequence_size
         self.hidden_dim = hidden_dim
         self.batch_size = batch_size
 

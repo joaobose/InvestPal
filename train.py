@@ -99,7 +99,6 @@ try:
                     data = data.cuda()
                     labels = labels.cuda()
 
-                # model.zero_grad()
                 out = model(data)
 
                 # Calculating accuracy
@@ -116,6 +115,11 @@ try:
 
             if epoch % plot_save_freq:
                 validation_accs.append(validation_acc_mean)
+        
+        
+        #------------------------------------- lr decay -------------------------------------- #
+        if lr_decay_active:
+            model.learning_rate_decay(epoch)
 
         #------------------------------------- Epoch output -------------------------------------- #
         print('\nEpoch: {}'.format(epoch))

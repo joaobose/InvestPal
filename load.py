@@ -16,7 +16,7 @@ else:
 
 
 dataset = ForexDataset(files, number_of_candles)
-data, label = dataset.get_batch(64)
+data, label, _ = dataset.get_batch(64)
 
 print(data.shape)
 print(label.shape)

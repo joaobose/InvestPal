@@ -68,7 +68,8 @@ def plot_data():
 
 try:
     for epoch in range(epochs):
-        model.initial_hidden = model.init_hidden()
+        # model.initial_hidden = model.init_hidden()
+        hidden = model.init_hidden()
 
         #------------------------------------- Train loop----------------------------------- #
         dataset_done = False
@@ -76,6 +77,7 @@ try:
         minibatch_accs = []
         
         while True:
+            hidden = tuple([mem.data for mem in hidden])
             data, labels, dataset_done = dataset.get_batch(batch_size, 'train')
 
             if dataset_done:
@@ -90,7 +92,7 @@ try:
                 labels = labels.cuda()
 
             model.zero_grad()
-            out = model(data)
+            out, hidden = model(data, hidden)
 
             loss = model.backpropagate(out,labels)
 
@@ -99,6 +101,9 @@ try:
             # Calculating accuracy
             y_hat = out.cpu().detach().numpy()
             y = labels.cpu().numpy()
+
+            print(y_hat)
+            print(y)
 
             acc = (y_hat > acc_threshold)
             acc = (acc * 1 == y) * 1
@@ -117,8 +122,12 @@ try:
         minibatch_accs = []
 
         with torch.no_grad():
+            hidden = model.init_hidden()
+            
             while True:
+                hidden = tuple([mem.data for mem in hidden])
                 data, labels, dataset_done = dataset.get_batch(batch_size, 'validation')
+                
                 if dataset_done:
                     break
                 data = torch.FloatTensor(data)
@@ -130,11 +139,13 @@ try:
                     data = data.cuda()
                     labels = labels.cuda()
 
-                out = model(data)
+                out, hidden = model(data, hidden)
 
                 # Calculating accuracy
                 y_hat = out.cpu().detach().numpy()
                 y = labels.cpu().numpy()
+                # print(y_hat)
+                # print(y)
 
                 acc = (y_hat > acc_threshold)
                 acc = (acc * 1 == y) * 1

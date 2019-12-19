@@ -32,9 +32,9 @@ drop_prob = 0
 misc hyperparameters:
     you know what these are
 """
-batch_size = 2048 #1024
+batch_size = 1024 #2048
 learning_rate = 0.001
-lr_decay_active = True # False
+lr_decay_active = False # False
 lr_decay = 8000 #6000
 lr_step_epochs = [1300]
 epochs = 10000
@@ -46,14 +46,14 @@ dataset parameters
 """
 single_pair = True
 pair = 'EURUSD'
-timestep = '4h'
+timestep = '1h'
 acc_threshold = 0.5
 
 """
 prediction_window:
     Max number of candles in wich the prediction can occur 
 """
-prediction_window = 4
+prediction_window = 4 #4
 
 """
 is_sin:

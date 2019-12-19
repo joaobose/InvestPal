@@ -49,11 +49,11 @@ class LSTM_BC(nn.Module):
         self.lr_decay = lr_decay
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
         
-        # the initial hidden units (memories) are zeros
-        self.initial_hidden = self.init_hidden()
+        # # the initial hidden units (memories) are zeros
+        # self.initial_hidden = self.init_hidden()
 
-    def forward(self, x):
-        hidden = self.initial_hidden
+    def forward(self, x, hidden):
+        # hidden = self.initial_hidden
 
         if str(self.device) == 'cuda':
             x = x.cuda()
@@ -71,7 +71,7 @@ class LSTM_BC(nn.Module):
         out = out.view(self.batch_size, -1)
         out = out[:,-1]
 
-        return out
+        return out , hidden
 
     def backpropagate(self,prediction,gt):
         loss = nn.BCELoss()(prediction.squeeze(), gt.float())
@@ -81,9 +81,15 @@ class LSTM_BC(nn.Module):
 
         return loss
 
+    # def init_hidden(self):
+    #     hidden = (torch.FloatTensor(np.zeros((self.n_layers, self.batch_size, self.hidden_dim))).to(self.device),
+    #               torch.FloatTensor(np.zeros((self.n_layers, self.batch_size, self.hidden_dim))).to(self.device))
+    #     return hidden
+
     def init_hidden(self):
-        hidden = (torch.FloatTensor(np.zeros((self.n_layers, self.batch_size, self.hidden_dim))).to(self.device),
-                  torch.FloatTensor(np.zeros((self.n_layers, self.batch_size, self.hidden_dim))).to(self.device))
+        weight = next(self.parameters()).data
+        hidden = (weight.new(self.n_layers, self.batch_size, self.hidden_dim).zero_().to(self.device),
+                      weight.new(self.n_layers, self.batch_size, self.hidden_dim).zero_().to(self.device))
         return hidden
 
     def learning_rate_decay(self, epoch):

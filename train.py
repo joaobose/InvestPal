@@ -2,176 +2,50 @@ import os
 import torch
 import models
 import numpy as np
-import matplotlib.pyplot as plt
 from parameters import *
 from dataset import *
+from torch.utils.data import DataLoader, Dataset
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 
-model = models.LSTM_BC(learning_rate,
-                       n_layers,
-                       input_dim,
-                       seq_len,
-                       hidden_dim,
-                       batch_size,
-                       1,device,
-                       drop_prob,
-                       lr_decay).to(device).float()
-
 # Dataset load
+
 files = []
 if single_pair:
     files.append('./dataset/' + timestep + '/' + pair + '_' + timestep + '.csv')
 else:
     files = os.listdir('./dataset/' + timestep)
 
-dataset = ForexDataset(files, seq_len)
+params = {'batch_size': batch_size,
+        'shuffle': True,
+        'num_workers': 2}
 
-# Metrics
-train_accs = []
-validation_accs = []
-losses = []
-data_plotted = False
+# Create Dataset
+training_set = ForexDataset(files[0], number_of_candles)
+training_loader = DataLoader(dataset=training_set, **params)
 
-def plot_data():
-    global train_accs, validation_accs, losses, data_plotted
+model = models.LSTMModel(input_dim, hidden_dim, layer_dim, output_dim, learning_rate)
 
-    if data_plotted:
-        return
-    data_plotted = True
+for epoch in range(epochs):
+    train_acc = []
+    total_loss = []
 
-    print('se acabo')
+    for i, data in enumerate(training_loader, 0):
+        local_x, local_y = data
 
-    #------------------------------------- Loss plot -------------------------------------- #
-    plt.plot(losses)
-    plt.title('Loss plot')
-    plt.ylabel('Loss')
-    plt.xlabel('Epochs')
-    plt.show()
+        y_pred = model(local_x)
+        loss = model.backpropagate(y_pred, local_y)
+        acc = model.evaluate_acc(y_pred, local_y)
 
-    #----------------------------------- Train acc plot -------------------------------------- #
-    plt.plot(train_accs)
-    plt.title('Train acc plot')
-    plt.ylabel('Train accuracy')
-    plt.xlabel('Epochs')
-    plt.show()
+        train_acc.append(acc)
+        total_loss.append(loss.item())
 
-    #--------------------------------- Validation acc plot ------------------------------------ #
-    plt.plot(validation_accs)
-    plt.title('Validation acc plot')
-    plt.ylabel('Validation accuracy')
-    plt.xlabel('Epochs')
-    plt.show()
+    train_acc = np.asarray(train_acc)
+    train_acc = np.mean(train_acc)
 
-try:
-    for epoch in range(epochs):
-        # model.initial_hidden = model.init_hidden()
-        hidden = model.init_hidden()
-
-        #------------------------------------- Train loop----------------------------------- #
-        dataset_done = False
-        minibatch_losses = []
-        minibatch_accs = []
-        
-        while True:
-            hidden = tuple([mem.data for mem in hidden])
-            data, labels, dataset_done = dataset.get_batch(batch_size, 'train')
-
-            if dataset_done:
-                break
-            data = torch.FloatTensor(data)
-            labels = torch.FloatTensor(labels)
-
-            assert(len(data) == seq_len)
-
-            if str(device) == 'cuda':
-                data = data.cuda()
-                labels = labels.cuda()
-
-            model.zero_grad()
-            out, hidden = model(data, hidden)
-
-            loss = model.backpropagate(out,labels)
-
-            minibatch_losses.append(loss.item())
-
-            # Calculating accuracy
-            y_hat = out.cpu().detach().numpy()
-            y = labels.cpu().numpy()
-
-            print(y_hat)
-            print(y)
-
-            acc = (y_hat > acc_threshold)
-            acc = (acc * 1 == y) * 1
-            acc = acc.sum() / len(y)
-            minibatch_accs.append(acc)
-
-        loss_mean = np.array(minibatch_losses).mean()
-        train_acc_mean = np.array(minibatch_accs).mean()
-
-        if epoch % plot_save_freq:
-            losses.append(loss_mean) 
-            train_accs.append(train_acc_mean)
-        
-        #------------------------------------- Validation loop----------------------------------- #
-        dataset_done = False
-        minibatch_accs = []
-
-        with torch.no_grad():
-            hidden = model.init_hidden()
-            
-            while True:
-                hidden = tuple([mem.data for mem in hidden])
-                data, labels, dataset_done = dataset.get_batch(batch_size, 'validation')
-                
-                if dataset_done:
-                    break
-                data = torch.FloatTensor(data)
-                labels = torch.FloatTensor(labels)
-
-                assert(len(data) == seq_len)
-
-                if str(device) == 'cuda':
-                    data = data.cuda()
-                    labels = labels.cuda()
-
-                out, hidden = model(data, hidden)
-
-                # Calculating accuracy
-                y_hat = out.cpu().detach().numpy()
-                y = labels.cpu().numpy()
-                # print(y_hat)
-                # print(y)
-
-                acc = (y_hat > acc_threshold)
-                acc = (acc * 1 == y) * 1
-                acc = acc.sum() / len(y)
-                minibatch_accs.append(acc)
-
-
-            validation_acc_mean = np.array(minibatch_accs).mean()
-
-            if epoch % plot_save_freq:
-                validation_accs.append(validation_acc_mean)
-        
-        
-        #------------------------------------- lr decay -------------------------------------- #
-        if lr_decay_active:
-            # model.learning_rate_decay(epoch)
-            model.learning_rate_step(epoch,lr_step_epochs)
-
-        #------------------------------------- Epoch output -------------------------------------- #
-        print('\nEpoch: {}'.format(epoch))
-        print('Loss: {}'.format(loss_mean))
-        print('Train Accuracy: {}'.format(train_acc_mean))
-        print('Validation Acurracy: {}'.format(validation_acc_mean))
-        print('Learning rate: {}'.format(model.optimizer.param_groups[0]['lr']))
-
-except KeyboardInterrupt:
-    plot_data()
-
-plot_data()
+    total_loss = np.asarray(total_loss)
+    total_loss = np.mean(total_loss)
+    print('Epoch {0}: Cost: {1:.4f} | Training acc: {2:.4f}'.format(epoch, total_loss, train_acc,))

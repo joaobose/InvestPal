@@ -4,76 +4,50 @@ import torch.nn.functional as F
 import math
 import numpy as np
 
-class LSTM_BC(nn.Module):
-    """
-        Params:
-            n_layers (L):
-                number of lstm layers
-
-            input_dim (K):
-                size of each element of the sequences 
-
-            sequence_size (n):
-                size of each temporal section
-
-            hidden_dim:
-                length of hidden (memories)
-
-            output_size:
-                lenght of output layer
-
-            drop_prob:
-                probability of dropping for dropout layer
-        
-        Notes:
-            - input shape is (n,m,K)
-    """
-    def __init__(self, learning_rate, n_layers, input_dim, sequence_size, hidden_dim, batch_size, output_size, device, drop_prob=0.5, lr_decay=1000):
-        super(LSTM_BC, self).__init__()
-        self.device = device
-        self.n_layers = n_layers
-        self.input_dim = input_dim
-        self.sequence_size = sequence_size
+class LSTMModel(nn.Module):
+    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim, learning_rate):
+        super(LSTMModel, self).__init__()
+        # Hidden dimensions
         self.hidden_dim = hidden_dim
-        self.batch_size = batch_size
 
-        self.lstm = nn.LSTM(input_dim, hidden_dim, n_layers, batch_first=False)
+        # Number of hidden layers
+        self.layer_dim = layer_dim
 
-        self.dropout = nn.Dropout(drop_prob)
-        self.fc = nn.Linear(hidden_dim, 8)
-        self.fc2 = nn.Linear(8, 8)
-        self.fc3 = nn.Linear(8, output_size)
+        # batch_first=True causes input/output tensors to be of shape
+        # (batch_dim, seq_dim, feature_dim)
+        self.lstm = nn.LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
+
+        # Readout layer
+        self.fc = nn.Linear(hidden_dim, 64)
+        self.fc2 = nn.Linear(64, 64)
+        self.fc3 = nn.Linear(64, output_dim)
         self.sigmoid = nn.Sigmoid()
-        
+        self.relu = nn.ReLU()
+
         self.learning_rate = learning_rate
-        self.lr_decay = lr_decay
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
-        
-        # # the initial hidden units (memories) are zeros
-        # self.initial_hidden = self.init_hidden()
 
-    def forward(self, x, hidden):
-        # hidden = self.initial_hidden
+    def forward(self, x):
+        # Initialize hidden state with zeros
+        h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_()
 
-        if str(self.device) == 'cuda':
-            x = x.cuda()
+        # Initialize cell state
+        c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).requires_grad_()
 
-        lstm_out, hidden = self.lstm(x, hidden)
+        # We need to detach as we are doing truncated backpropagation through time (BPTT)
+        # If we don't, we'll backprop all the way to the start even after going through another batch
+        out, (hn, cn) = self.lstm(x, (h0.detach(), c0.detach()))
 
-        lstm_out = lstm_out.contiguous().view(-1, self.hidden_dim)
+        # Index hidden state of last time step
+        # out.size() --> 100, 28, 100
+        # out[:, -1, :] --> 100, 100 --> just want last time step hidden states! 
+        out = self.relu(self.fc(out[:, -1, :]))
+        out = self.relu(self.fc2(out))
+        out = self.sigmoid(self.fc3(out))
+        # out.size() --> 100, 10
+        return out
 
-        out = lstm_out
-        out = F.relu(self.fc(out))
-        out = F.relu(self.fc2(out))
-        out = self.fc3(out)
-        out = self.sigmoid(out)
-
-        out = out.view(self.batch_size, -1)
-        out = out[:,-1]
-
-        return out , hidden
-
-    def backpropagate(self,prediction,gt):
+    def backpropagate(self, prediction, gt):
         loss = nn.BCELoss()(prediction.squeeze(), gt.float())
         self.optimizer.zero_grad()
         loss.backward()
@@ -81,24 +55,12 @@ class LSTM_BC(nn.Module):
 
         return loss
 
-    # def init_hidden(self):
-    #     hidden = (torch.FloatTensor(np.zeros((self.n_layers, self.batch_size, self.hidden_dim))).to(self.device),
-    #               torch.FloatTensor(np.zeros((self.n_layers, self.batch_size, self.hidden_dim))).to(self.device))
-    #     return hidden
+    def evaluate_acc(self, y_pred, y):
+        y_pred = y_pred.detach().numpy()
+        y = y.numpy()
+        answers = (y_pred > 0.5)
+        matches = (answers == y)
+        tp = matches.sum()
+        acc = tp / len(matches)
 
-    def init_hidden(self):
-        weight = next(self.parameters()).data
-        hidden = (weight.new(self.n_layers, self.batch_size, self.hidden_dim).zero_().to(self.device),
-                      weight.new(self.n_layers, self.batch_size, self.hidden_dim).zero_().to(self.device))
-        return hidden
-
-    def learning_rate_decay(self, epoch):
-        lr = self.learning_rate * math.exp(- epoch / self.lr_decay)
-        for param_group in self.optimizer.param_groups:
-            param_group['lr'] = lr
-
-    def learning_rate_step(self, epoch, nums):
-        if epoch in nums:
-            for param_group in self.optimizer.param_groups:
-                param_group['lr'] = 0.2 * param_group['lr'] 
-    
+        return acc

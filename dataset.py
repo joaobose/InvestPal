@@ -10,9 +10,9 @@ class ForexDataset(Dataset):
 
         loaded_data = np.loadtxt(rootpath, delimiter=',', dtype=float)[:3000]
         if kind == 'train':
-            loaded_data = loaded_data[22:int(0.6*len(loaded_data)), 1:5]
+            loaded_data = loaded_data[22:int(0.8*len(loaded_data)), 1:5]
         elif kind == 'validation':
-            loaded_data = loaded_data[int(0.6*len(loaded_data)):int(0.8*len(loaded_data)), 1:5]
+            loaded_data = loaded_data[int(0.8*len(loaded_data)):, 1:5]
         else:
             loaded_data = loaded_data[int(0.8*len(loaded_data)):, 1:5]
 

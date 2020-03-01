@@ -6,8 +6,11 @@ from parameters import *
 from dataset import *
 from torch.utils.data import DataLoader, Dataset
 import matplotlib.pyplot as plt
+from oandapyV20 import API 
+import oandapyV20.endpoints.instruments as instruments
+import pandas as pd
 
-def plot_data():
+def plot_training():
     with torch.no_grad():
         real = []
         pred = []
@@ -17,8 +20,8 @@ def plot_data():
             real.append(local_y.detach().numpy().squeeze())
             pred.append(y_pred.detach().numpy().squeeze())
             
-        real = real[0]
-        pred = pred[0]
+        real = real[10]
+        pred = pred[10]
 
         plt.plot(real)
         plt.plot(pred)
@@ -27,6 +30,8 @@ def plot_data():
         plt.xlabel('Time')
         plt.show()
 
+def plot_validation():
+    with torch.no_grad():
         real = []
         pred = []
         for i, data in enumerate(validation_loader, 0):
@@ -34,8 +39,9 @@ def plot_data():
             y_pred = model(local_x)
             real.append(local_y.detach().numpy().squeeze())
             pred.append(y_pred.detach().numpy().squeeze())
-        real = real[0]
-        pred = pred[0]
+            
+        real = real[3]
+        pred = pred[3]
 
         plt.plot(real)
         plt.plot(pred)
@@ -45,24 +51,12 @@ def plot_data():
         plt.show()
 
 
-        real = []
-        pred = []
-        for i, data in enumerate(test_loader, 0):
-            local_x, local_y = data
-            y_pred = model(local_x)
-            real.append(local_y.detach().numpy().squeeze())
-            pred.append(y_pred.detach().numpy().squeeze())
-        real = real[0]
-        pred = pred[0]
 
-        plt.plot(real)
-        plt.plot(pred)
-        plt.title('Test price prediction')
-        plt.ylabel('Price')
-        plt.xlabel('Time')
-        plt.show()
-
-
+def plot_data():
+    path = model_path
+    torch.save(model.state_dict(), path)
+    plot_training()
+    plot_validation()
 
 
 try:
@@ -80,7 +74,7 @@ try:
         files = os.listdir('./dataset/' + timestep)
 
     params = {'batch_size': batch_size,
-            'shuffle': True,
+            'shuffle': False,
             'num_workers': 2}
 
     # Create Dataset
@@ -104,7 +98,7 @@ try:
 
             y_pred = model(local_x)
             loss = model.backpropagate(y_pred, local_y, 'train')
-            acc = model.evaluate_acc(y_pred, local_y)
+            acc = model.evaluate_acc(local_x, local_y, y_pred)
 
             train_acc.append(acc)
             total_loss.append(loss.item())
@@ -126,10 +120,8 @@ try:
             total_loss_valid = np.asarray(total_loss_valid)
             total_loss_valid = np.mean(total_loss_valid)
 
-                
-        print('Epoch {0}: Cost: {1:.8f} | Valid cost: {2:.8f}'.format(epoch, total_loss, total_loss_valid))
+        model.scheduler.step()
+        print('Epoch {0}: Cost: {1:.8f} | Valid cost: {2:.8f} | Train accuracy: {3:.4f}'.format(epoch, total_loss, total_loss_valid, train_acc))
 
 except KeyboardInterrupt:
     plot_data()
-
-

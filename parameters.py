@@ -1,4 +1,4 @@
-number_of_candles = 50
+number_of_candles = 2
 # OHLC
 input_dim = 4
 # Nodes
@@ -9,11 +9,13 @@ layer_dim = 4
 output_dim = 1
 
 batch_size = 64
-learning_rate = 0.000005
+learning_rate = 0.00005
 epochs = 10000
 
 
 single_pair = True
 pair = 'EURUSD'
-timestep = '1h'
+timestep = '4h'
 acc_threshold = 0.5
+
+model_path = './model.pth'

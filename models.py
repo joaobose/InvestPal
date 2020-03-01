@@ -73,27 +73,28 @@ class ANN(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_dim, output_dim, learning_rate):
         super(ANN, self).__init__()
 
-        # Readout layer
-        self.fc = nn.Linear(input_dim, 128)
-        self.fc1 = nn.Linear(128, 128)
-        self.fc2 = nn.Linear(128, 128)
-        self.fc4 = nn.Linear(128, 32)
-        self.fc5 = nn.Linear(32, output_dim)
-        self.relu = nn.ReLU()
+        self.nodes = [input_dim, 256, 256, 256, 256, 128, 128, 128, 128, 64, 64, 64, 64, 32, 32, 32, 32, 16, 16, 16, 16, 8, 8, 8, 8, 8, output_dim]
+        self.custom_layers = []
 
+        for i in range(1, len(self.nodes)):
+            fc = nn.Linear(self.nodes[i-1], self.nodes[i])
+            self.custom_layers.append(fc)
+        self.custom_layers = nn.ModuleList(self.custom_layers)
+
+        self.relu = nn.ReLU()
         self.learning_rate = learning_rate
         self.optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        self.scheduler = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, milestones=[80, 100, 120, 140, 160], gamma=0.8)
 
     def forward(self, x):
-        out = self.relu(self.fc(x))
-        out = self.relu(self.fc2(out))
-        out = self.relu(self.fc4(out))
-        out = self.fc5(out)
-        # out.size() --> 100, 10
+        out = x
+        for i in range(len(self.custom_layers) - 1):
+            out = self.relu(self.custom_layers[i](out))
+        out = self.custom_layers[-1](out)
         return out
 
     def backpropagate(self, prediction, gt, kind):
-        loss = nn.MSELoss()(prediction, gt)
+        loss = nn.L1Loss()(prediction, gt)
 
         if kind == 'validation':
             return loss
@@ -104,11 +105,15 @@ class ANN(nn.Module):
 
         return loss
 
-    def evaluate_acc(self, y_pred, y):
+    def evaluate_acc(self, x, y, y_pred):
         y_pred = y_pred.detach().numpy()
+        x = x.numpy()
         y = y.numpy()
-        answers = (y_pred > 0.5)
-        matches = (answers == y)
+        x = x.reshape(x.shape[0], -1, 4)
+        last_closing = x[:, -1:, 3]
+        compare_1 = (last_closing - y_pred) > 0
+        compare_2 = (last_closing - y) > 0
+        matches = (compare_1 == compare_2)
         tp = matches.sum()
         acc = tp / len(matches)
 
